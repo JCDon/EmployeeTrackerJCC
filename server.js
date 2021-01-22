@@ -1,6 +1,10 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
+let managerArr = [];
+let roleArr = [];
+let manId;
+
 var connection = mysql.createConnection({
     host: "localhost",
 
@@ -20,13 +24,46 @@ connection.connect(function (err) {
     console.log("connected as id " + connection.threadId + "\n");
 });
 
-
-// base inquirer to start the process
 const start = () => {
+    selectActionPath();
+}
+
+// a function to choose options
+const selectActionPath = () => {
     inquirer.prompt([
         {
             type: "list",
-            choices: ["Create New Department", "Create New Employee Role", "Create New Employee"],
+            message: "What would you like to do?",
+            choices: ["Create", "View", "Update", "Quit this process"],
+            name: "actionPath"
+        }
+    ]).then((ans) => {
+        switch (ans.actionPath) {
+            case "Create":
+                create();
+                break;
+        
+            case "View":
+                view();
+                break;
+        
+            case "Update":
+                update();
+                break;
+        
+            default:
+                break;
+        }
+    })
+}
+
+
+// base inquirer to start the process
+const create = () => {
+    inquirer.prompt([
+        {
+            type: "list",
+            choices: ["Create New Department", "Create New Employee Role", "Create New Employee", "Quit this process"],
             message: "What would you like to do?",
             name: "selectTask"
         }
@@ -45,10 +82,79 @@ const start = () => {
                 break;
 
             default:
+
                 break;
         }
     })
 }
+
+// a function for selecting viewable data tables
+const view = () => {
+    inquirer.prompt([
+        {
+            type: "list",
+            message: "What would you like to view?",
+            choices: ["View Departments", "View Roles", "View Employees", "Quit this process"],
+            name: "selectView"
+        }
+    ]).then((ans) => {
+        console.table(ans);
+        switch (ans.selectView) {
+            case "View Departments":
+                viewDepartment();
+                break;
+        
+            case "View Roles":
+                viewRole();
+                break;
+        
+            case "View Employees":
+                viewEmployee();
+                break;
+        
+            default:
+                break;
+        }
+    })
+}
+
+const isManager = () => {
+    inquirer.prompt([
+        {
+            type: "confirm",
+            message: "Is this a manager?",
+            name: "askIfMan"
+        }
+    ]).then((ans) => {
+        if (!ans.askIfMan) {
+            inquirer.prompt([
+                {
+                    type: "list",
+                    choices: managersArr,
+                    message: "WHat is their manager id?",
+                    name: "empsMan"
+                }
+            ]).then((ans) => {
+                managersArr.push(manId);
+                console.log(managersArr);
+            })
+        }
+    })
+}
+
+const update = () => {
+    inquirer.prompt([
+    {
+        
+    }
+    ])
+}
+
+// 
+// 
+// 
+// 
+
 
 // an addDepartment function to prompt department specific questions
 const addDepartment = () => {
@@ -65,8 +171,12 @@ const addDepartment = () => {
         }
     ]).then((ans) => {
         console.table(ans);
-        const query = connection.query(`INSERT INTO department (id, name)
-        VALUES (${ans.depID}, "${ans.depName}");`, function (err, res) {
+        const query = connection.query(`INSERT INTO department SET ?`,
+        {
+            id: ans.depID,
+            name: ans.depName
+        }, 
+        function (res, err) {
             if (err) throw err;
 
             console.table(res);
@@ -101,8 +211,14 @@ const addRole = () => {
         }
     ]).then((ans) => {
         console.table(ans);
-        const query = connection.query(`INSERT INTO role (id, title, salary, department_id)
-        VALUES (${ans.roleID}, "${ans.title}", ${ans.salary}, ${ans.goToID});`, function (err, res) {
+        const query = connection.query(`INSERT INTO role SET ?`,
+        {
+            id: ans.roleID,
+            title: ans.title,
+            salary: ans.salary,
+            department_id: ans.goToID
+        },
+         function (err, res) {
             if (err) throw err;
 
             console.table(res);
@@ -138,10 +254,18 @@ const addEmployee = () => {
         }
     ]).then((ans) => {
         console.table(ans);
-        const query = connection.query(`INSERT INTO employee (id, first_name, last_name, role_id)
-        VALUES (${ans.roleID}, "${ans.firstName}", ${ans.lastName}, ${ans.empRoleID});`, function (err, res) {
-            if (err) throw err;
-
+        manId = ans.empId;
+        isManager();
+        const query = connection.query(`INSERT INTO employee SET ?`,
+        {
+            id: ans.empID,
+            first_name: ans.firstName,
+            last_name: ans.lastName,
+            role_id: ans.empRoleID
+        },
+         function (err, res) {
+             if (err) throw err;
+             
             console.table(res);
             connection.end();
         }
@@ -149,5 +273,32 @@ const addEmployee = () => {
     })
 }
 
+
+// a function for viewing the department data
+const viewDepartment = () => {
+    const query = connection.query(`SELECT * FROM departments`, function (res, err) {
+        if (err) throw err;
+        console.table(res);
+        connection.end();
+    });
+}
+
+// a function for viewing the role data
+const viewRole = () => {
+    const query = connection.query(`SELECT * FROM role`, function (res, err) {
+        if (err) throw err;
+        console.table(res);
+        connection.end();
+    })
+}
+
+// a function for viewing the employee data
+const viewEmployee = () => {
+    const query = connection.query(`SELECT * FROM employee`, function (res, err) {
+        if (err) throw err;
+        console.table(res);
+        connection.end();
+    })
+}
 start();
 
