@@ -9,7 +9,7 @@
 
 ## Description
 
-    This is a fully functioning application developed to assist a company or manager is storing Department, Role, and Employee data. The user is able to create, view, and update all of their data as needed to manage employee and business information.
+    This is a fully functioning application developed to assist a company or manager in storing Department, Role, and Employee data. The user is able to create, view, and update all of their data as needed to manage employee and business information.
 
     Main Start-Up Terminal
 
